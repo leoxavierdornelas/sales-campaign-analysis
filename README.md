@@ -1,5 +1,4 @@
-# Criação do README completo em arquivo .txt
-conteudo = '''# Sales Campaign Performance Analysis (CRM)
+# Sales Campaign Performance Analysis (CRM)
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue) ![Status](https://img.shields.io/badge/Status-Completo-green)
 
