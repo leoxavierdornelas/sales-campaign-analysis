@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dashboard – Campanha</title>
+<style>
+body { font-family: Arial; margin: 40px; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border: 1px solid #ccc; padding: 8px; text-align: left; }
+</style>
+</head>
+<body>
+
+<h1>Dashboard – Campanha</h1>
+
+<p>Sumário consolidado:</p>
+<div id="table"></div>
+
+<script>
+fetch('outputs/summary.json')
+  .then(r => r.json())
+  .then(data => {
+    let html = "<table><tr>";
+    Object.keys(data[0]).forEach(k => html += "<th>" + k + "</th>");
+    html += "</tr>";
+
+    data.forEach(row => {
+      html += "<tr>";
+      Object.values(row).forEach(v => html += "<td>" + v + "</td>");
+      html += "</tr>";
+    });
+
+    html += "</table>";
+    document.getElementById("table").innerHTML = html;
+  });
+</script>
+
+</body>
+</html>

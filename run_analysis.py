@@ -1,46 +1,38 @@
-# run_analysis.py
-from src.gerar_dados import gerar_dados_campanha
-from src.analise_kpis import calcular_kpis
-import matplotlib.pyplot as plt
 import pandas as pd
-import os
+from src.gerar_dados import gerar_dados_campanha
 
-def main():
-    # Gerar dados
-    df = gerar_dados_campanha(n_registros=2000, seed=42)
-    os.makedirs('data', exist_ok=True)
-    df.to_csv('data/relatorio_performance_leads_raw.csv', index=False)
+print("--- SUMÁRIO ---")
 
-    # Calcular KPIs
-    taxa, roi, invalidos, resumo = calcular_kpis(df)
-    resumo.to_csv('data/kpis_por_canal.csv', index=True)
+# 1. Gerar os dados
+df = gerar_dados_campanha(2000)
 
-    # Imprimir sumário rápido
-    print("--- SUMÁRIO ---")
-    print(resumo)
+# 2. Calcular KPIs
+conversoes = df[df["status"] == "Convertido (Venda)"].groupby("canal")["lead_id"].count()
+total = df.groupby("canal")["lead_id"].count()
+taxa_conv = (conversoes / total * 100).round(2)
 
-    # Plot: taxa de conversão
-    plt.figure(figsize=(8,5))
-    plt.bar(resumo.index, resumo['taxa_conversao_pct'])
-    plt.title('Taxa de Conversão (%) por Canal')
-    plt.ylabel('Taxa (%)')
-    plt.xticks(rotation=30)
-    plt.tight_layout()
-    plt.savefig('outputs/taxa_conversao_por_canal.png')
-    plt.close()
+custo_total = df.groupby("canal")["custo_disparo"].sum()
+receita_total = df.groupby("canal")["valor_venda"].sum()
+roi = ((receita_total - custo_total) / custo_total).round(2)
 
-    # Plot: ROI (tratando NaN)
-    plt.figure(figsize=(8,5))
-    roi_plot = resumo['roi'].fillna(0)
-    plt.bar(resumo.index, roi_plot)
-    plt.title('ROI (x) por Canal — NaN convertido para 0 no gráfico')
-    plt.ylabel('ROI')
-    plt.xticks(rotation=30)
-    plt.tight_layout()
-    plt.savefig('outputs/roi_por_canal.png')
-    plt.close()
+invalidos = df[df["status"] == "Número Inválido"].groupby("canal")["lead_id"].count()
 
-    print("Arquivos gerados em data/ e outputs/")
+# 3. Criar o dataframe resumo
+summary = pd.DataFrame({
+    "total_leads": total,
+    "conversoes": conversoes,
+    "taxa_conversao_pct": taxa_conv,
+    "custo_total": custo_total,
+    "receita_total": receita_total,
+    "roi": roi,
+    "invalidos": invalidos
+}).fillna(0)
 
-if __name__ == "__main__":
-    main()
+print(summary)
+
+# 4. Exportar arquivos
+df.to_csv("data/dados_campanha.csv", index=False)
+summary.to_csv("outputs/summary.csv", index=False)
+summary.to_json("outputs/summary.json", orient="records")
+
+print("Arquivos gerados em data/ e outputs/")
